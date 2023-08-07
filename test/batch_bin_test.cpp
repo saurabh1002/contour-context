@@ -15,7 +15,8 @@ const std::string PROJ_DIR = std::string(PJSRCDIR);
 
 SequentialTimeProfiler stp;
 
-class BatchBinSpinner : public BaseROSSpinner {
+class BatchBinSpinner : public BaseROSSpinner
+{
   // --- Added members for evaluation and LC module running ---
   std::unique_ptr<ContourDB> ptr_contour_db;
   std::unique_ptr<ContLCDEvaluator> ptr_evaluator;
@@ -23,19 +24,20 @@ class BatchBinSpinner : public BaseROSSpinner {
   ContourManagerConfig cm_config;
   ContourDBConfig db_config;
 
-  CandidateScoreEnsemble thres_lb_, thres_ub_;  // check thresholds
+  CandidateScoreEnsemble thres_lb_, thres_ub_; // check thresholds
 
   // bookkeeping
   int cnt_tp = 0, cnt_fn = 0, cnt_fp = 0;
   double ts_beg = -1;
 
 public:
-  explicit BatchBinSpinner(ros::NodeHandle &nh_) : BaseROSSpinner(nh_) {  // mf1 k02
-
+  explicit BatchBinSpinner(ros::NodeHandle &nh_) : BaseROSSpinner(nh_)
+  { // mf1 k02
   }
 
   // before start: 1/1: load thres
-  void loadConfig(const std::string &config_fpath, std::string &sav_path) {
+  void loadConfig(const std::string &config_fpath, std::string &sav_path)
+  {
 
     printf("Loading parameters...\n");
     auto yl = yamlLoader(config_fpath);
@@ -102,15 +104,18 @@ public:
   ///
   /// \param outer_cnt
   /// \return 0: normal. <0: external signal. 1: load failed
-  int spinOnce(int &outer_cnt) {
+  int spinOnce(int &outer_cnt)
+  {
     CHECK(ptr_contour_db && ptr_evaluator);
     mtx_status.lock();
-    if (stat_terminated) {
+    if (stat_terminated)
+    {
       printf("Spin terminated by external signal.\n");
       mtx_status.unlock();
       return -1;
     }
-    if (stat_paused) {
+    if (stat_paused)
+    {
       printf("Spin paused by external signal.\n");
       mtx_status.unlock();
       return -2;
@@ -118,7 +123,8 @@ public:
     mtx_status.unlock();
 
     bool loaded = ptr_evaluator->loadNewScan();
-    if (!loaded) {
+    if (!loaded)
+    {
       printf("Load new scan failed.\n");
       return 1;
     }
@@ -137,36 +143,38 @@ public:
 
     // 1.1 Prepare and display info: gt/shifted pose, tf
     double ts_curr = laser_info_tgt.ts;
-    if (ts_beg < 0) ts_beg = ts_curr;
+    if (ts_beg < 0)
+      ts_beg = ts_curr;
 
     Eigen::Isometry3d T_gt_curr = laser_info_tgt.sens_pose;
     Eigen::Vector3d time_translate(0, 0, 10);
-    time_translate = time_translate * (ts_curr - ts_beg) / 60;  // 10m per min
+    time_translate = time_translate * (ts_curr - ts_beg) / 60; // 10m per min
     g_poses.insert(std::make_pair(laser_info_tgt.seq, GlobalPoseInfo(T_gt_curr, time_translate.z())));
 
 #if PUB_ROS_MSG
     geometry_msgs::TransformStamped tf_gt_curr = tf2::eigenToTransform(T_gt_curr);
-    broadcastCurrPose(tf_gt_curr);  // the stamp is now
+    broadcastCurrPose(tf_gt_curr); // the stamp is now
 
     tf_gt_curr.header.seq = laser_info_tgt.seq;
     tf_gt_curr.transform.translation.z += time_translate.z();
     publishPath(wall_time_ros, tf_gt_curr);
-    if (laser_info_tgt.seq % 50 == 0)  // It is laggy to display too many characters in rviz
+    if (laser_info_tgt.seq % 50 == 0) // It is laggy to display too many characters in rviz
       publishScanSeqText(wall_time_ros, tf_gt_curr, laser_info_tgt.seq);
 #endif
 
-    // 1.2. save images of layers
+      // 1.2. save images of layers
 
 #if SAVE_MID_FILE
     clk.tic();
-    for (int i = 0; i < cm_config.lv_grads_.size(); i++) {
+    for (int i = 0; i < cm_config.lv_grads_.size(); i++)
+    {
       std::string f_name = PROJ_DIR + "/results/layer_img/contour_" + "lv" + std::to_string(i) + "_" +
-                           ptr_cm_tgt->getStrID() + ".png";   // TODO: what should be the str name of scans?
+                           ptr_cm_tgt->getStrID() + ".png"; // TODO: what should be the str name of scans?
       ptr_cm_tgt->saveContourImage(f_name, i);
     }
     std::cout << "Time save layers: " << clk.toctic() << std::endl;
 #endif
-    ptr_cm_tgt->clearImage();  // a must to save memory
+    ptr_cm_tgt->clearImage(); // a must to save memory
 
     // 2. query
     std::vector<std::pair<int, int>> new_lc_pairs;
@@ -179,18 +187,20 @@ public:
     ptr_contour_db->queryRangedKNN(ptr_cm_tgt, thres_lb_, thres_ub_, ptr_cands, cand_corr, bev_tfs);
     printf("%lu Candidates in %7.5fs: \n", ptr_cands.size(), clk.toc());
 
-//    if(laser_info_tgt.seq == 894){
-//      printf("Manual break point here.\n");
-//    }
+    //    if(laser_info_tgt.seq == 894){
+    //      printf("Manual break point here.\n");
+    //    }
 
     // 2.1 process query results
     CHECK(ptr_cands.size() < 2);
     PredictionOutcome pred_res;
     if (ptr_cands.empty())
       pred_res = ptr_evaluator->addPrediction(ptr_cm_tgt, 0.0);
-    else {
+    else
+    {
       pred_res = ptr_evaluator->addPrediction(ptr_cm_tgt, cand_corr[0], ptr_cands[0], bev_tfs[0]);
-      if (pred_res.tfpn == PredictionOutcome::TP || pred_res.tfpn == PredictionOutcome::FP) {
+      if (pred_res.tfpn == PredictionOutcome::TP || pred_res.tfpn == PredictionOutcome::FP)
+      {
         new_lc_pairs.emplace_back(ptr_cm_tgt->getIntID(), ptr_cands[0]->getIntID());
         new_lc_tfp.emplace_back(pred_res.tfpn == PredictionOutcome::TP);
 #if SAVE_MID_FILE
@@ -204,22 +214,23 @@ public:
       }
     }
 
-    switch (pred_res.tfpn) {
-      case PredictionOutcome::TP:
-        printf("Prediction outcome: TP\n");
-        cnt_tp++;
-        break;
-      case PredictionOutcome::FP:
-        printf("Prediction outcome: FP\n");
-        cnt_fp++;
-        break;
-      case PredictionOutcome::TN:
-        printf("Prediction outcome: TN\n");
-        break;
-      case PredictionOutcome::FN:
-        printf("Prediction outcome: FN\n");
-        cnt_fn++;
-        break;
+    switch (pred_res.tfpn)
+    {
+    case PredictionOutcome::TP:
+      printf("Prediction outcome: TP\n");
+      cnt_tp++;
+      break;
+    case PredictionOutcome::FP:
+      printf("Prediction outcome: FP\n");
+      cnt_fp++;
+      break;
+    case PredictionOutcome::TN:
+      printf("Prediction outcome: TN\n");
+      break;
+    case PredictionOutcome::FN:
+      printf("Prediction outcome: FN\n");
+      cnt_fn++;
+      break;
     }
 
     printf("TP Error mean: t:%7.4f m, r:%7.4f rad\n", ptr_evaluator->getTPMeanTrans(), ptr_evaluator->getTPMeanRot());
@@ -246,7 +257,8 @@ public:
     return 0;
   }
 
-  void savePredictionResults(const std::string &sav_path) const {
+  void savePredictionResults(const std::string &sav_path) const
+  {
     ptr_evaluator->savePredictionResults(sav_path);
   }
 
@@ -257,8 +269,8 @@ public:
   inline int get_fn() const { return cnt_fn; }
 };
 
-
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
   FLAGS_alsologtostderr = true;
   google::InitGoogleLogging(argv[0]);
 
@@ -268,7 +280,7 @@ int main(int argc, char **argv) {
   printf("batch bin test start\n");
 
   // Check thres path
-//  std::string cand_score_config = PROJ_DIR + "/config/score_thres_kitti_bag_play.cfg";
+  //  std::string cand_score_config = PROJ_DIR + "/config/score_thres_kitti_bag_play.cfg";
   std::string cand_score_config = PROJ_DIR + "/config/batch_bin_test_config.yaml";
 
   // Main process:
@@ -283,9 +295,10 @@ int main(int argc, char **argv) {
   int cnt = 0;
 
   printf("\nHold for 3 seconds...\n");
-  std::this_thread::sleep_for(std::chrono::duration<double>(3.0));  // human readability: have time to see init output
+  std::this_thread::sleep_for(std::chrono::duration<double>(3.0)); // human readability: have time to see init output
 
-  while (ros::ok()) {
+  while (ros::ok())
+  {
     ros::spinOnce();
 
     int ret_code = o.spinOnce(cnt);
@@ -302,7 +315,6 @@ int main(int argc, char **argv) {
   stp.printScreen(true);
   const std::string log_dir = PROJ_DIR + "/log/";
   stp.printFile(log_dir + "timing_cont2.txt", true);
-
 
   return 0;
 }
