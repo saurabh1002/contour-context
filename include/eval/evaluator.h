@@ -433,7 +433,7 @@ public:
         int addr_src = lookupNN<int>(rec.id_src, assigned_seqs_, 0);
         CHECK_GE(addr_src, 0);
 
-        res_file << rec.id_tgt << "\t" << rec.id_src << "\n";
+        res_file << rec.id_tgt << "\t" << rec.id_src << "\t" << rec.correlation << "\n";
         str_rep_src = laser_info_[addr_src].fpath;
       }
 

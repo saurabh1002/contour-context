@@ -185,7 +185,7 @@ public:
 
     clk.tic();
     ptr_contour_db->queryRangedKNN(ptr_cm_tgt, thres_lb_, thres_ub_, ptr_cands, cand_corr, bev_tfs);
-    printf("%lu Candidates in %7.5fs: \n", ptr_cands.size(), clk.toc());
+    // printf("%lu Candidates in %7.5fs: \n", ptr_cands.size(), clk.toc());
 
     //    if(laser_info_tgt.seq == 894){
     //      printf("Manual break point here.\n");
@@ -217,27 +217,27 @@ public:
     switch (pred_res.tfpn)
     {
     case PredictionOutcome::TP:
-      printf("Prediction outcome: TP\n");
+      // printf("Prediction outcome: TP\n");
       cnt_tp++;
       break;
     case PredictionOutcome::FP:
-      printf("Prediction outcome: FP\n");
+      // printf("Prediction outcome: FP\n");
       cnt_fp++;
       break;
     case PredictionOutcome::TN:
-      printf("Prediction outcome: TN\n");
+      // printf("Prediction outcome: TN\n");
       break;
     case PredictionOutcome::FN:
-      printf("Prediction outcome: FN\n");
+      // printf("Prediction outcome: FN\n");
       cnt_fn++;
       break;
     }
 
-    printf("TP Error mean: t:%7.4f m, r:%7.4f rad\n", ptr_evaluator->getTPMeanTrans(), ptr_evaluator->getTPMeanRot());
-    printf("TP Error rmse: t:%7.4f m, r:%7.4f rad\n", ptr_evaluator->getTPRMSETrans(), ptr_evaluator->getTPRMSERot());
-    printf("Accumulated tp poses: %d\n", cnt_tp);
-    printf("Accumulated fn poses: %d\n", cnt_fn);
-    printf("Accumulated fp poses: %d\n", cnt_fp);
+    // printf("TP Error mean: t:%7.4f m, r:%7.4f rad\n", ptr_evaluator->getTPMeanTrans(), ptr_evaluator->getTPMeanRot());
+    // printf("TP Error rmse: t:%7.4f m, r:%7.4f rad\n", ptr_evaluator->getTPRMSETrans(), ptr_evaluator->getTPRMSERot());
+    // printf("Accumulated tp poses: %d\n", cnt_tp);
+    // printf("Accumulated fn poses: %d\n", cnt_fn);
+    // printf("Accumulated fp poses: %d\n", cnt_fp);
 
     stp.start();
     // 3. update database
@@ -247,7 +247,7 @@ public:
     clk.tic();
     ptr_contour_db->pushAndBalance(laser_info_tgt.seq, laser_info_tgt.ts);
     stp.record("Update database");
-    printf("Rebalance tree cost: %7.5f\n", clk.toc());
+    // printf("Rebalance tree cost: %7.5f\n", clk.toc());
 
 #if PUB_ROS_MSG
     // 4. publish new vis

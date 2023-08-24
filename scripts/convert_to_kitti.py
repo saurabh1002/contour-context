@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 from tqdm import tqdm
 
-from kiss_icp.datasets.generic import GenericDataset
+from kiss_icp.datasets.nclt import NCLTDataset
 
 argparser = argparse.ArgumentParser()
 argparser.add_argument("path", type=str)
@@ -11,7 +11,7 @@ args = argparser.parse_args()
 
 data_dir = os.path.abspath(args.path)
 
-dataset = GenericDataset(data_dir)
+dataset = NCLTDataset(data_dir)
 scan_files = dataset.scan_files
 
 kitti_dir = os.path.abspath(os.path.join(data_dir, os.pardir, f"{os.path.basename(data_dir)}_kitti"))

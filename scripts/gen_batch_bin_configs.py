@@ -10,79 +10,80 @@ import csv
 #  Ordered by lidar ts AND seq. (3 elements per line)
 
 def gen_mulran(dir_bins, f_global_pose, sav_pos, sav_lid):
-    def rotx(t, deg=False):
-        if deg:
-            t = t * np.pi / 180
-        ct = np.cos(t)
-        st = np.sin(t)
+    if sav_pos is not None:
+        def rotx(t, deg=False):
+            if deg:
+                t = t * np.pi / 180
+            ct = np.cos(t)
+            st = np.sin(t)
 
-        return np.array([[1, 0, 0], [0, ct, -st], [0, st, ct]])
+            return np.array([[1, 0, 0], [0, ct, -st], [0, st, ct]])
 
-    def roty(t, deg=False):
-        if deg:
-            t = t * np.pi / 180
-        ct = np.cos(t)
-        st = np.sin(t)
+        def roty(t, deg=False):
+            if deg:
+                t = t * np.pi / 180
+            ct = np.cos(t)
+            st = np.sin(t)
 
-        return np.array([[ct, 0, st], [0, 1, 0], [-st, 0, ct]])
+            return np.array([[ct, 0, st], [0, 1, 0], [-st, 0, ct]])
 
-    def rotz(t, deg=False):
-        if deg:
-            t = t * np.pi / 180
-        ct = np.cos(t)
-        st = np.sin(t)
+        def rotz(t, deg=False):
+            if deg:
+                t = t * np.pi / 180
+            ct = np.cos(t)
+            st = np.sin(t)
 
-        return np.array([[ct, -st, 0], [st, ct, 0], [0, 0, 1]])
+            return np.array([[ct, -st, 0], [st, ct, 0], [0, 0, 1]])
 
-    # set the calibration
-    se3_6d = [1.7042, -0.021, 1.8047, 0.0001, 0.0003, 179.6654]  # calib: lidar_to_base_init_se3
-    trans = np.array(se3_6d[0:3]).reshape((3, 1))
+        # set the calibration
+        se3_6d = [1.7042, -0.021, 1.8047, 0.0001, 0.0003, 179.6654]  # calib: lidar_to_base_init_se3
+        trans = np.array(se3_6d[0:3]).reshape((3, 1))
 
-    roll = se3_6d[3]
-    pitch = se3_6d[4]
-    yaw = se3_6d[5]
+        roll = se3_6d[3]
+        pitch = se3_6d[4]
+        yaw = se3_6d[5]
 
-    rot = rotz(yaw, True) * roty(pitch, True) @ rotx(roll, True)
+        rot = rotz(yaw, True) * roty(pitch, True) @ rotx(roll, True)
 
-    lidar_to_base_init_se3 = np.vstack([np.hstack([rot, trans]), np.array([[0, 0, 0, 1]])])
-    print(lidar_to_base_init_se3)
+        lidar_to_base_init_se3 = np.vstack([np.hstack([rot, trans]), np.array([[0, 0, 0, 1]])])
+        print(lidar_to_base_init_se3)
 
-    # calculate sensor gt poses
-    tss = []
-    poses = []
-    T_wl0 = None
-    tws0_set = False
-    with open(f_global_pose, newline='') as cf:
-        reader = csv.reader(cf, delimiter=',')
-        cnt_lines = 0
-        cnt_lines_valid = 0
-        for row in reader:
-            cnt_lines += 1
-            if len(row) == 13:
-                try:
-                    ts_sec = float(row[0]) * 1e-9
-                    tf12_base = np.array([float(a) for a in row[1:]])
+        # calculate sensor gt poses
+        tss = []
+        poses = []
+        T_wl0 = None
+        tws0_set = False
+        with open(f_global_pose, newline='') as cf:
+            reader = csv.reader(cf, delimiter=',')
+            cnt_lines = 0
+            cnt_lines_valid = 0
+            for row in reader:
+                cnt_lines += 1
+                if len(row) == 13:
+                    try:
+                        ts_sec = float(row[0]) * 1e-9
+                        tf12_base = np.array([float(a) for a in row[1:]])
 
-                    cnt_lines_valid += 1
-                    tss.append(ts_sec)
+                        cnt_lines_valid += 1
+                        tss.append(ts_sec)
 
-                    T_wb = np.vstack([tf12_base.reshape((3, 4)), np.array([0, 0, 0, 1])])
-                    T_wl = T_wb @ np.linalg.inv(lidar_to_base_init_se3)
+                        T_wb = np.vstack([tf12_base.reshape((3, 4)), np.array([0, 0, 0, 1])])
+                        T_wl = T_wb @ np.linalg.inv(lidar_to_base_init_se3)
 
-                    if not tws0_set:
-                        T_wl0 = T_wl
-                        tws0_set = True
+                        if not tws0_set:
+                            T_wl0 = T_wl
+                            tws0_set = True
 
-                    T_l0l = np.linalg.inv(T_wl0) @ T_wl
-                    poses.append(T_l0l[0:3, :].reshape(-1))
+                        T_l0l = np.linalg.inv(T_wl0) @ T_wl
+                        poses.append(T_l0l[0:3, :].reshape(-1))
 
-                except ValueError:
-                    print("Not a float in line: ", row)
+                    except ValueError:
+                        print("Not a float in line: ", row)
 
-        print("valid gt lines read: %d/%d" % (cnt_lines_valid, cnt_lines))
+            print("valid gt lines read: %d/%d" % (cnt_lines_valid, cnt_lines))
 
-    np_file_pose_dat = np.hstack([np.array(tss).reshape((-1, 1)), np.vstack(poses)])
-    np.savetxt(sav_pos, np_file_pose_dat, "%.6f")
+        np_file_pose_dat = np.hstack([np.array(tss).reshape((-1, 1)), np.vstack(poses)])
+        np.savetxt(sav_pos, np_file_pose_dat, "%.6f")
 
     # handle file paths. Assumption: file name is ts in nano sec
     bin_files = [f for f in os.listdir(dir_bins) if
@@ -93,7 +94,7 @@ def gen_mulran(dir_bins, f_global_pose, sav_pos, sav_lid):
 
     lid_lines = []
     for i, fn in enumerate(bin_files):
-        lid_lines.append("%.6f %d %s" % (eval(fn.split(".")[0]) * 1e-9, i, os.path.join(dir_bins, fn)))
+        lid_lines.append(os.path.join(dir_bins, fn))
     with open(sav_lid, "w") as f1:
         f1.write("\n".join(lid_lines))
 
@@ -218,9 +219,16 @@ if __name__ == "__main__":
     # =============================== Mulran Odometry ====================================
 
     # MULRAN
-    dir_lid_bin = "/home/ssg1002/Datasets/Sejong02/Ouster/"
-    fp_gt_ts_pose = "/home/ssg1002/Datasets/Sejong02/global_pose.csv"
-    sav_1 = "/home/ssg1002/Datasets/Sejong02/baselines/contour_context_results/ts-sens_pose.txt"
-    sav_2 = "/home/ssg1002/Datasets/Sejong02/baselines/contour_context_results/ts-lidar_bins.txt"
+    name = "Sejong02"
+    # dir_lid_bin = f"/home/ssg1002/Datasets/{name}/Ouster/"
+    # fp_gt_ts_pose = f"/home/ssg1002/Datasets/{name}/global_pose.csv"
+    # sav_1 = f"/home/ssg1002/Datasets/{name}/baselines/contour_context_results/ts-sens_pose.txt"
+    # sav_2 = f"/home/ssg1002/Datasets/{name}/baselines/contour_context_results/ts-lidar_bins.txt"
+
+    dir_lid_bin = f"/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-realsense/01_short_experiment/raw_format/ouster_scan_kitti/"
+    fp_gt_ts_pose = f"/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-realsense/01_short_experiment/raw_format/global_pose.csv"
+    sav_1 = None
+    sav_2 = f"/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-realsense/01_short_experiment/baselines/contour_context_results/ts-lidar_bins.txt"
 
     gen_mulran(dir_lid_bin, fp_gt_ts_pose, sav_1, sav_2)
+

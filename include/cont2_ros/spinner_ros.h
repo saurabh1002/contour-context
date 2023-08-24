@@ -24,8 +24,10 @@
 // 1. Main purpose: display path and loop connection by calling either a member function (need to implement) or an outer
 //  loop function.
 // 2. Optional purpose: add the loop detector and evaluator into the spinner by inheriting it.
-struct BaseROSSpinner {
-  struct GlobalPoseInfo {
+struct BaseROSSpinner
+{
+  struct GlobalPoseInfo
+  {
     Eigen::Isometry3d T_wl;
     double z_shift{};
 
@@ -42,8 +44,8 @@ struct BaseROSSpinner {
   nav_msgs::Path path_msg;
   visualization_msgs::MarkerArray line_array;
   visualization_msgs::MarkerArray idx_text_array;
-//  tf2_ros::Buffer tfBuffer;
-//  tf2_ros::TransformListener tfListener;
+  //  tf2_ros::Buffer tfBuffer;
+  //  tf2_ros::TransformListener tfListener;
   ros::Subscriber sub_stop_go;
 
   // The data used for general purpose (w/o gt files, etc.) in the work flow. Used to draw things. Add on the go.
@@ -56,7 +58,6 @@ struct BaseROSSpinner {
   std::mutex mtx_status;
 
   // additional util member variables:
-
 
   // Functions:
 
@@ -73,34 +74,42 @@ struct BaseROSSpinner {
     sub_stop_go = nh.subscribe("/cont2_status", 100, &BaseROSSpinner::statusCallback, this);
   }
 
-  void statusCallback(const std_msgs::String::ConstPtr &msg) {
+  void statusCallback(const std_msgs::String::ConstPtr &msg)
+  {
     mtx_status.lock();
-    if (msg->data == std::string("pause")) {
+    if (msg->data == std::string("pause"))
+    {
       stat_paused = true;
-    } else if (msg->data == std::string("resume")) {
+    }
+    else if (msg->data == std::string("resume"))
+    {
       stat_paused = false;
-    } else if (msg->data == std::string("toggle")) {
+    }
+    else if (msg->data == std::string("toggle"))
+    {
       stat_paused = !stat_paused;
-    } else if (msg->data == std::string("terminate")) {
+    }
+    else if (msg->data == std::string("terminate"))
+    {
       stat_terminated = true;
     }
 
-//    if (msg->data == std::string("end")) {
-//      printf("[H] %d \t Need reset\n", idx++);
-//      need_rst = true;
-//    } else if (msg->data == std::string("exit")) {
-//      printf("[H] %d rounds of simulation have finished cleanly. Exiting...\n", idx);
-//      mtx_status.unlock();
-//      ros::shutdown();
-//    } else {
-//      printf("[H] %d \t A new round\n", idx);
-//      CHECK(!need_rst);  // must finish reset before new round starts
-//    }
+    //    if (msg->data == std::string("end")) {
+    //      printf("[H] %d \t Need reset\n", idx++);
+    //      need_rst = true;
+    //    } else if (msg->data == std::string("exit")) {
+    //      printf("[H] %d rounds of simulation have finished cleanly. Exiting...\n", idx);
+    //      mtx_status.unlock();
+    //      ros::shutdown();
+    //    } else {
+    //      printf("[H] %d \t A new round\n", idx);
+    //      CHECK(!need_rst);  // must finish reset before new round starts
+    //    }
     mtx_status.unlock();
   }
 
-
-  void publishPath(ros::Time time, const geometry_msgs::TransformStamped &tf_gt_last) {
+  void publishPath(ros::Time time, const geometry_msgs::TransformStamped &tf_gt_last)
+  {
     path_msg.header.stamp = time;
     geometry_msgs::PoseStamped ps;
     ps.pose.orientation = tf_gt_last.transform.rotation;
@@ -112,7 +121,8 @@ struct BaseROSSpinner {
     pub_path.publish(path_msg);
   }
 
-  void publishScanSeqText(ros::Time time, const geometry_msgs::TransformStamped &tf_gt_last, int seq) {
+  void publishScanSeqText(ros::Time time, const geometry_msgs::TransformStamped &tf_gt_last, int seq)
+  {
     // index
     visualization_msgs::Marker marker;
     marker.header.frame_id = "world";
@@ -145,13 +155,15 @@ struct BaseROSSpinner {
   /// \param new_lc_pairs The loop pair indexed by sequence key, consistent with map `g_poses`'s key field
   /// \param time
   void publishLCConnections(const std::vector<std::pair<int, int>> &new_lc_pairs, const std::vector<bool> &TF_positive,
-                            ros::Time time) {
-    printf("Num new pairs: %lu\n", new_lc_pairs.size());
+                            ros::Time time)
+  {
+    // printf("Num new pairs: %lu\n", new_lc_pairs.size());
     line_array.markers.clear();
 
     DCHECK_EQ(new_lc_pairs.size(), TF_positive.size());
 
-    for (int i = 0; i < new_lc_pairs.size(); i++) {
+    for (int i = 0; i < new_lc_pairs.size(); i++)
+    {
       const auto &pr = new_lc_pairs[i];
       visualization_msgs::Marker marker;
       marker.header.frame_id = "world";
@@ -177,17 +189,19 @@ struct BaseROSSpinner {
       marker.lifetime = ros::Duration();
 
       marker.scale.x = 0.5;
-      if (TF_positive[i]) {
+      if (TF_positive[i])
+      {
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 0.0f;
         marker.color.g = 1.0f;
         marker.color.b = 0.0f;
-      } else {
+      }
+      else
+      {
         marker.color.a = 1.0; // Don't forget to set the alpha!
         marker.color.r = 1.0f;
         marker.color.g = 0.0f;
         marker.color.b = 0.0f;
-
       }
 
       line_array.markers.emplace_back(marker);
@@ -195,15 +209,14 @@ struct BaseROSSpinner {
     pub_lc_connections.publish(line_array);
   }
 
-  static void broadcastCurrPose(geometry_msgs::TransformStamped tf_gt_last) {
+  static void broadcastCurrPose(geometry_msgs::TransformStamped tf_gt_last)
+  {
     static tf2_ros::TransformBroadcaster br;
     tf_gt_last.header.stamp = ros::Time::now();
     tf_gt_last.header.frame_id = "world";
     tf_gt_last.child_frame_id = "gt_curr";
     br.sendTransform(tf_gt_last);
   }
-
 };
 
-
-#endif //CONT2_SPINNER_ROS_H
+#endif // CONT2_SPINNER_ROS_H
