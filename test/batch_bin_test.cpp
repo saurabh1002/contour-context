@@ -139,7 +139,7 @@ public:
     std::shared_ptr<ContourManager> ptr_cm_tgt = ptr_evaluator->getCurrContourManager(cm_config);
     stp.record("make bev");
     const auto laser_info_tgt = ptr_evaluator->getCurrScanInfo();
-    printf("\n===\nLoaded: assigned seq: %d, bin path: %s\n", laser_info_tgt.seq, laser_info_tgt.fpath.c_str());
+    printf("Loaded: assigned seq: %d, bin path: %s\n", laser_info_tgt.seq, laser_info_tgt.fpath.c_str());
 
     // 1.1 Prepare and display info: gt/shifted pose, tf
     double ts_curr = laser_info_tgt.ts;
@@ -192,25 +192,29 @@ public:
     //    }
 
     // 2.1 process query results
-    CHECK(ptr_cands.size() < 2);
+    // CHECK(ptr_cands.size() < 2);
     PredictionOutcome pred_res;
     if (ptr_cands.empty())
       pred_res = ptr_evaluator->addPrediction(ptr_cm_tgt, 0.0);
     else
     {
-      pred_res = ptr_evaluator->addPrediction(ptr_cm_tgt, cand_corr[0], ptr_cands[0], bev_tfs[0]);
-      if (pred_res.tfpn == PredictionOutcome::TP || pred_res.tfpn == PredictionOutcome::FP)
+      printf("num queries %d\n", ptr_cands.size());
+      for (int i = 0; i < ptr_cands.size(); i++)
       {
-        new_lc_pairs.emplace_back(ptr_cm_tgt->getIntID(), ptr_cands[0]->getIntID());
-        new_lc_tfp.emplace_back(pred_res.tfpn == PredictionOutcome::TP);
+        pred_res = ptr_evaluator->addPrediction(ptr_cm_tgt, cand_corr[i], ptr_cands[i], bev_tfs[i]);
+        if (pred_res.tfpn == PredictionOutcome::TP || pred_res.tfpn == PredictionOutcome::FP)
+        {
+          new_lc_pairs.emplace_back(ptr_cm_tgt->getIntID(), ptr_cands[i]->getIntID());
+          new_lc_tfp.emplace_back(pred_res.tfpn == PredictionOutcome::TP);
 #if SAVE_MID_FILE
-        // save images of pairs
-        std::string f_name =
-            PROJ_DIR + "/results/match_comp_img/lc_" + ptr_cm_tgt->getStrID() + "-" + ptr_cands[0]->getStrID() +
-            ".png";
-        ContourManager::saveMatchedPairImg(f_name, *ptr_cm_tgt, *ptr_cands[0]);
-        printf("Image saved: %s-%s\n", ptr_cm_tgt->getStrID().c_str(), ptr_cands[0]->getStrID().c_str());
+          // save images of pairs
+          std::string f_name =
+              PROJ_DIR + "/results/match_comp_img/lc_" + ptr_cm_tgt->getStrID() + "-" + ptr_cands[0]->getStrID() +
+              ".png";
+          ContourManager::saveMatchedPairImg(f_name, *ptr_cm_tgt, *ptr_cands[i]);
+          printf("Image saved: %s-%s\n", ptr_cm_tgt->getStrID().c_str(), ptr_cands[i]->getStrID().c_str());
 #endif
+        }
       }
     }
 

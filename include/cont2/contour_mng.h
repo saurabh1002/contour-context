@@ -587,7 +587,7 @@ public:
     }
     bev_pixfs_.clear();
     bev_pixfs_.insert(bev_pixfs_.begin(), tmp_pillars.begin(), tmp_pillars.end());
-    std::cout << "Time makebev: " << clk.toc() << std::endl;
+    // std::cout << "Time makebev: " << clk.toc() << std::endl;
 
     //    bev_pixfs_.shrink_to_fit();
     //    std::sort(bev_pixfs_.begin(), bev_pixfs_.end());  // std::map is ordered by definition
@@ -658,7 +658,7 @@ public:
 
     TicToc clk;
     makeContourRecursiveHelper(full_bev_roi, cv::Mat1b(1, 1), 0, nullptr);
-    std::cout << "Time makecontour: " << clk.toc() << std::endl;
+    // std::cout << "Time makecontour: " << clk.toc() << std::endl;
 
     for (int ll = 0; ll < cont_views_.size(); ll++)
     {

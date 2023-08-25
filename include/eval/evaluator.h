@@ -140,7 +140,7 @@ public:
     }
     infile1.close();
     CHECK_EQ(gt_poses.size(), gt_tss.size());
-    printf("Added %lu stamped gt poses.\n", gt_poses.size());
+    // printf("Added %lu stamped gt poses.\n", gt_poses.size());
 
     std::vector<int> sort_permu(gt_poses.size());
     std::iota(sort_permu.begin(), sort_permu.end(), 0);
@@ -186,7 +186,7 @@ public:
     infile2.close();
     CHECK_EQ(lidar_ts.size(), assigned_seq.size());
     CHECK_EQ(lidar_ts.size(), bin_paths.size());
-    printf("Added %lu laser bin paths.\n", bin_paths.size());
+    // printf("Added %lu laser bin paths.\n", bin_paths.size());
 
     // filter the lidar bin paths
     int cnt_valid_scans = 0;
@@ -204,7 +204,7 @@ public:
       laser_info_.emplace_back(tmp_info);
       assigned_seqs_.emplace_back(assigned_seq[i]);
     }
-    printf("Found %d laser scans with gt poses.\n", cnt_valid_scans);
+    // printf("Found %d laser scans with gt poses.\n", cnt_valid_scans);
 
     // check ordering
     for (auto it2 = laser_info_.begin(); it2 != laser_info_.end();)
@@ -216,7 +216,7 @@ public:
         CHECK_LT(it1->ts, it2->ts);
       }
     }
-    printf("Ordering check passed\n");
+    // printf("Ordering check passed\n");
 
     //    // save gt pose and bin path, so we can arrange the data in KITTI format with script (format_mulran_as_kitti.py)
     //    std::FILE *fp1, *fp2, *fp3, *fp4, *fp5;
@@ -280,7 +280,7 @@ public:
         }
       }
     }
-    printf("Found %d poses with %d gt loops.\n", cnt_gt_lc_p, cnt_gt_lc);
+    // printf("Found %d poses with %d gt loops.\n", cnt_gt_lc_p, cnt_gt_lc);
   }
 
   bool loadNewScan()
@@ -294,8 +294,8 @@ public:
       return false;
     }
 
-    printf("\n===\nloaded scan addr %d, seq: %d, fpath: %s\n", p_lidar_curr, laser_info_[p_lidar_curr].seq,
-           laser_info_[p_lidar_curr].fpath.c_str());
+    // printf("\n===\nloaded scan addr %d, seq: %d, fpath: %s\n", p_lidar_curr, laser_info_[p_lidar_curr].seq,
+    //  laser_info_[p_lidar_curr].fpath.c_str());
     return true;
   }
 
@@ -358,10 +358,10 @@ public:
       double gt_trans_norm3d = (laser_info_[addr_src].sens_pose.translation() -
                                 laser_info_[addr_tgt].sens_pose.translation())
                                    .norm();
-      printf(" Dist: Est2d: %.2f; GT3d: %.2f\n", est_trans_norm2d, gt_trans_norm3d);
+      // printf(" Dist: Est2d: %.2f; GT3d: %.2f\n", est_trans_norm2d, gt_trans_norm3d);
 
       double err_vec[3] = {tf_err.translation().x(), tf_err.translation().y(), std::atan2(tf_err(1, 0), tf_err(0, 0))};
-      printf(" Error: dx=%f, dy=%f, dtheta=%f\n", err_vec[0], err_vec[1], err_vec[2]);
+      // printf(" Error: dx=%f, dy=%f, dtheta=%f\n", err_vec[0], err_vec[1], err_vec[2]);
 
       memcpy(curr_res.est_err, err_vec, sizeof(err_vec));
       if (est_corr >= sim_thres)

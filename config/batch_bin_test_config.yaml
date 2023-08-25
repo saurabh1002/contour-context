@@ -50,6 +50,10 @@ fpath_sens_gt_pose: "/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-rea
 fpath_lidar_bins: "/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-realsense/01_short_experiment/baselines/contour_context_results/ts-lidar_bins.txt"
 fpath_outcome_sav: "/home/ssg1002/Datasets/newer_college/2020-ouster-os1-64-realsense/01_short_experiment/baselines/contour_context_results/predicted_closures.txt"
 
+# fpath_sens_gt_pose: "/home/ssg1002/Datasets/Sejong01/baselines/contour_context_results/ts-sens_pose.txt"
+# fpath_lidar_bins: "/home/ssg1002/Datasets/Sejong01/baselines/contour_context_results/ts-lidar_bins.txt"
+# fpath_outcome_sav: "/home/ssg1002/Datasets/Sejong01/baselines/contour_context_results/predicted_closures.txt"
+
 correlation_thres: 0.64928 # sim score above this value will be plotted as positive
 
 #####################################################

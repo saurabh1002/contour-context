@@ -685,7 +685,7 @@ struct CandidateManager
               });
 
     // printf("Fine optim corrs:\n");
-    int ret_size = 1; // the needed
+    int ret_size = pre_sel_size; // the needed
     for (int i = 0; i < ret_size; i++)
     {
       res_cand.emplace_back(candidates_[i].cm_cand_);
