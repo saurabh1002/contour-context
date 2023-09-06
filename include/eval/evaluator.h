@@ -50,6 +50,7 @@ struct PredictionOutcome
   Res tfpn = Res::TN;  // the most insignificant type
   double est_err[3]{}; // TP, FP: the error param on SE2, else: all zero
   double correlation{};
+  Eigen::Isometry2d relative_pose_2d = Eigen::Isometry2d::Identity();
 };
 
 // Definition of loader
@@ -350,7 +351,7 @@ public:
       CHECK_GE(addr_src, 0);
 
       curr_res.id_src = id_src;
-
+      curr_res.relative_pose_2d = T_est_delta_2d;
       const auto gen_bev_config = q_mng->getConfig(); // the config used to generate BEV
       Eigen::Isometry2d tf_err = ConstellCorrelation::evalMetricEst(T_est_delta_2d, laser_info_[addr_src].sens_pose,
                                                                     laser_info_[addr_tgt].sens_pose, gen_bev_config);
@@ -433,7 +434,13 @@ public:
         int addr_src = lookupNN<int>(rec.id_src, assigned_seqs_, 0);
         CHECK_GE(addr_src, 0);
 
-        res_file << rec.id_tgt << "\t" << rec.id_src << "\t" << rec.correlation << "\n";
+        Eigen::Isometry2d tf = rec.relative_pose_2d;
+        res_file
+            << rec.id_tgt << "\t" << rec.id_src << "\t" << rec.correlation << "\t"
+            << tf(0, 0) << "\t" << tf(0, 1) << "\t" << tf(0, 2) << "\t"
+            << tf(1, 0) << "\t" << tf(1, 1) << "\t" << tf(1, 2) << "\t"
+            << tf(2, 0) << "\t" << tf(2, 1) << "\t" << tf(2, 2);
+
         str_rep_src = laser_info_[addr_src].fpath;
       }
 
