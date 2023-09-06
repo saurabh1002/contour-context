@@ -439,7 +439,7 @@ public:
             << rec.id_tgt << "\t" << rec.id_src << "\t" << rec.correlation << "\t"
             << tf(0, 0) << "\t" << tf(0, 1) << "\t" << tf(0, 2) << "\t"
             << tf(1, 0) << "\t" << tf(1, 1) << "\t" << tf(1, 2) << "\t"
-            << tf(2, 0) << "\t" << tf(2, 1) << "\t" << tf(2, 2);
+            << tf(2, 0) << "\t" << tf(2, 1) << "\t" << tf(2, 2) << "\n";
 
         str_rep_src = laser_info_[addr_src].fpath;
       }
